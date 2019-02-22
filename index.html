@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>GHOSTBUSTERS</title>
+    <link rel="icon" href="GB_Logo.png">
+
+</head>
+
+<style>
+
+    @font-face {
+        font-family: "GHOSTBUS";
+        src: url("GHOSTBUS.TTF");
+    }
+
+    body {
+        background: black;
+    }
+
+    canvas {
+        border: solid 2px white;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        -webkit-filter: drop-shadow(10px 10px 10px #33cf31);
+        filter: drop-shadow(10px 10px 10px #33cf31);
+    }
+
+    #title{
+        margin: auto;
+        display: block;
+        width: 50%;
+        -webkit-filter: drop-shadow(5px 5px 5px #33cf31);
+        filter: drop-shadow(5px 5px 5px #33cf31);
+    }
+
+    #bogi {
+        margin-top: 5rem;
+        text-align: center;
+        display: block;
+    }
+
+    h1{
+        color: #33cf31;
+        font-family: GHOSTBUS;
+        -webkit-filter: drop-shadow(5px 5px 5px #C6CF0E);
+        filter: drop-shadow(5px 5px 5px #c6cf0e);
+    }
+
+</style>
+
+<body>
+
+<div>
+    <iframe src="Ghostbusters.mp3" allow="autoplay, loop" style="display: none"></iframe>
+    <img id="title" src="ghostbusters-letters.png">
+
+</div>
+
+<script>
+
+    var score = 0,
+        gscore = 0,
+        countblink = 10,
+        ghost = false;
+        ghost2 = false;
+
+     var player = {
+            x: 50,
+            y: 100,
+            pacmouth: 400,
+            pacdir: 0,
+            psize: 40,
+            speed: 5
+    };
+
+    var enemy = {
+        x: 150,
+        y: 200,
+        speed: 5,
+        moving: 0,
+        dirx: 0,
+        diry: 0,
+        flash: 0,
+        ghosteat: false
+    };
+
+    var enemy2 = {
+        x: 150,
+        y: 200,
+        speed: 5,
+        moving: 0,
+        dirx: 0,
+        diry: 0,
+        flash: 0,
+        ghosteat: false
+    };
+
+    var powerdot = {
+        x: 10,
+        y: 10,
+        powerup: false,
+        pcountdown: 0,
+        ghostNum: 0,
+        ghostNum2: 0
+    };
+
+//setup canvas
+    var canvas = document.createElement("canvas");
+    var context = canvas.getContext("2d");
+    document.body.appendChild(canvas);
+    canvas.width = 600;
+    canvas.height = 400;
+
+    var background;
+    background = new Image();
+    background.ready=false;
+    background.onload= checkReady;
+    background.src = "bird-eye.jpg";
+
+
+
+
+//import image
+    var mainImage;
+    mainImage = new Image();
+    mainImage.ready = false;
+    mainImage.onload = checkReady;
+    mainImage.src = "GHOSTBUSTERS.png";
+
+//add key listener
+    var keyclick = {};
+    document.addEventListener("keydown", function (event) {
+        keyclick[event.keyCode] = true;
+        move(keyclick);
+    }, false);
+    document.addEventListener("keyup", function (event) {
+        delete keyclick[event.keyCode];
+    }, false);
+
+// key functions
+    function move(keyclick) {
+
+//check click key value
+
+        if (37 in keyclick) {
+            player.x -= player.speed;
+            player.pacdir = 80;
+        }
+        if (38 in keyclick) {
+            player.y -= player.speed;
+            player.pacdir = 120;
+        }
+        if (39 in keyclick) {
+            player.x += player.speed;
+            player.pacdir = 0;
+        }
+        if (40 in keyclick) {
+            player.y += player.speed;
+            player.pacdir = 40;
+        }
+
+// prevent run off screen
+        if (player.x >= (canvas.width - 40)) {
+            player.x = 0;
+        }
+        if (player.y >= (canvas.height - 40)) {
+            player.y = 0;
+        }
+        if (player.x < 0) {
+            player.x = (canvas.width - 40);
+        }
+        if (player.y < 0) {
+            player.y = (canvas.height - 40);
+        }
+
+//open close mouth
+        if (player.pacmouth == 400) {
+            player.pacmouth = 440;
+        }
+        else {
+            player.pacmouth = 400;
+        }
+        render();
+    }
+
+// function once ready
+    function checkReady() {
+        this.ready = true;
+        playgame();
+    }
+
+// game play loop
+    function playgame() {
+        render();
+        requestAnimationFrame(playgame);
+    }
+
+// random number function
+    function myNum(n) {
+        return Math.floor(Math.random() * n);
+    }
+
+// draw on canvas
+    function render() {
+        context.drawImage(background, 0, 0);
+
+
+// check if powerup dot is on screen
+        if (!powerdot.powerup && powerdot.pcountdown < 5) {
+            powerdot.x = myNum(420) + 30;
+            powerdot.y = myNum(250) + 30;
+            powerdot.powerup = true;
+        }
+
+// check if ghost is on screen
+        if (!ghost) {
+            enemy.ghostNum = myNum(5) * 80;
+            enemy.x = myNum(450);
+            enemy.y = myNum(250) + 30;
+            ghost = true;
+        }
+
+// check if ghost is on screen
+        if (!ghost2) {
+            enemy2.ghostNum = myNum(5) * 80;
+            enemy2.x = myNum(450);
+            enemy2.y = myNum(250) + 30;
+            ghost2 = true;
+        }
+
+// move enemy
+        if (enemy.moving < 0) {
+            enemy.moving = (myNum(20) * 3) + myNum(1);
+            enemy.speed = myNum(2) + 1;
+            enemy.dirx = 0;
+            enemy.diry = 0;
+            if (powerdot.ghosteat) {
+                enemy.speed = enemy.speed * -1;
+            }
+            if (enemy.moving % 2) {
+                if (player.x < enemy.x) {
+                    enemy.dirx = -enemy.speed;
+                }
+                else {
+                    enemy.dirx = enemy.speed;
+                }
+            }
+            else {
+                if (player.y < enemy.y) {
+                    enemy.diry = -enemy.speed;
+                }
+                else {
+                    enemy.diry = enemy.speed;
+                }
+            }
+        }
+        enemy.moving--;
+        enemy.x = enemy.x + enemy.dirx;
+        enemy.y = enemy.y + enemy.diry;
+
+// prevent enemy run off screen
+        if (enemy.x >= (canvas.width - 50)) {
+            enemy.x = 0;
+        }
+        if (enemy.y >= (canvas.height - 40)) {
+            enemy.y = 0;
+        }
+        if (enemy.x < 0) {
+            enemy.x = (canvas.width - 40);
+        }
+        if (enemy.y < 0) {
+            enemy.y = (canvas.height - 40);
+        }
+        if (enemy2.moving < 0) {
+            enemy2.moving = (myNum(20) * 3) + myNum(1);
+            enemy2.speed = myNum(2) + 1;
+            enemy2.dirx = 0;
+            enemy2.diry = 0;
+            if (powerdot.ghosteat) {
+                enemy2.speed = enemy2.speed * -1;
+            }
+            if (enemy2.moving % 2) {
+                if (player.x < enemy2.x) {
+                    enemy2.dirx = -enemy2.speed;
+                }
+                else {
+                    enemy2.dirx = enemy2.speed;
+                }
+            }
+            else {
+                if (player.y < enemy2.y) {
+                    enemy2.diry = -enemy2.speed;
+                }
+                else {
+                    enemy2.diry = enemy2.speed;
+                }
+            }
+        }
+        enemy2.moving--;
+        enemy2.x = enemy2.x + enemy2.dirx;
+        enemy2.y = enemy2.y + enemy2.diry;
+
+// prevent enemy2 run off screen
+        if (enemy2.x >= (canvas.width - 40)) {
+            enemy2.x = 0;
+        }
+        if (enemy2.y >= (canvas.height - 40)) {
+            enemy2.y = 0;
+        }
+        if (enemy2.x < 0) {
+            enemy2.x = (canvas.width - 40);
+        }
+        if (enemy2.y < 0) {
+            enemy2.y = (canvas.height - 40);
+        }
+
+//Collision detection ghost
+        if (player.x <= (enemy.x + 35) && enemy.x <= (player.x + 35) && player.y <= (enemy.y + 35) && enemy.y <= (player.y + 40)) {
+            console.log('ghost');
+            if (powerdot.ghosteat) {
+                score++;
+            }
+            else {
+                gscore++;
+            }
+            player.x = 10;
+            player.y = 100;
+            enemy.x = 300;
+            enemy.y = 200;
+            powerdot.pcountdown = 0;
+        }
+        if (player.x <= (enemy2.x + 35) && enemy2.x <= (player.x + 35) && player.y <= (enemy2.y + 35) && enemy2.y <= (player.y + 40)) {
+            console.log('ghost');
+            if (powerdot.ghosteat) {
+                score++;
+            }
+            else {
+                gscore++;
+            }
+            player.x = 10;
+            player.y = 100;
+            enemy2.x = 300;
+            enemy2.y = 200;
+            powerdot.pcountdown = 0;
+        }
+
+//Collision detection powerup
+        if (player.x <= powerdot.x && powerdot.x <= (player.x + 40) && player.y <= powerdot.y && powerdot.y <= (player.y + 40)) {
+
+            powerdot.powerup = false;
+            powerdot.pcountdown = 500;
+            powerdot.ghostNum = enemy.ghostNum;
+            powerdot.ghostNum2 = enemy2.ghostNum;
+            enemy.ghostNum = 480;
+            enemy2.ghostNum = 480;
+            powerdot.x = 0;
+            powerdot.y = 0;
+            powerdot.ghosteat = true;
+            player.speed = 10;
+        }
+
+// powerup countdown
+        if (powerdot.ghosteat) {
+            powerdot.pcountdown--;
+            if (powerdot.pcountdown <= 0) {
+                powerdot.ghosteat = false;
+                enemy.ghostNum = powerdot.ghostNum;
+                enemy2.ghostNum = powerdot.ghostNum2;
+                player.speed = 5;
+            }
+        }
+// draw power up dot
+        if (powerdot.powerup) {
+            context.drawImage(mainImage, 520, 122, 35, 35, powerdot.x, powerdot.y, 35, 35);
+
+        }
+
+// enemy blinking
+        if (countblink > 0) {
+            countblink--;
+        }
+        else {
+            countblink = 20;
+            if (enemy.flash == 0) {
+                enemy.flash = 40;
+                enemy2.flash = 40;
+            }
+            else {
+                enemy.flash = 0;
+                enemy2.flash = 0;
+            }
+        }
+
+// write score
+        context.font = "20px Verdana";
+        context.fillStyle = "white";
+        context.fillText("Ghostbuster: " + score + " vs Ghost:" + gscore, 150, 20);
+
+// draw characters
+        context.drawImage(mainImage, enemy2.ghostNum, enemy2.flash, 40, 40, enemy2.x, enemy2.y, 40, 40);
+        context.drawImage(mainImage, enemy.ghostNum, enemy.flash, 40, 40, enemy.x, enemy.y, 40, 40);
+        context.drawImage(mainImage, player.pacmouth, player.pacdir, 40, 40, player.x, player.y, 40, 40);
+    }
+</script>
+
+<div id="bogi">
+    <h1>for BOGDAN - 2019.</h1>
+</div>
+
+</body>
+
+</html>
